@@ -419,7 +419,10 @@ if __name__ == "__main__":
         trainer_config["distributed_backend"] = "ddp"
         for k in nondefault_trainer_args(opt):
             trainer_config[k] = getattr(opt, k)
-        if not "gpus" in trainer_config:
+        if "tpu" in trainer_config:
+            tpu = True
+            del trainer_config["distributed_backend"]
+        elif not "gpus" in trainer_config:
             del trainer_config["distributed_backend"]
             cpu = True
         else:
@@ -529,6 +532,8 @@ if __name__ == "__main__":
 
         # configure learning rate
         bs, base_lr = config.data.params.batch_size, config.model.base_learning_rate
+        if tpu:
+            ngpu = 8
         if not cpu:
             ngpu = len(lightning_config.trainer.gpus.strip(",").split(','))
         else:
